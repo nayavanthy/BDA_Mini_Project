@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 # Mount the directory where the images are saved
-image_dir = "/home/captain/Desktop/BDA/Backend/DashBoard"
+image_dir = "/home/captain/Desktop/BDA/Backend/DashBoard/method_plots"
 app.mount("/static", StaticFiles(directory=image_dir), name="static")
 
 # Define request model
@@ -29,7 +29,9 @@ action_map = {
     "Data Collection": ["python3", "/home/captain/Desktop/BDA/Backend/Data_Collection/economic_indicator_collection.py"],
     "Load Data": ["python3", "/home/captain/Desktop/BDA/Backend/Data_Load/start_load.py"],
     "Data Processing": ["python3", "/home/captain/Desktop/BDA/Backend/Data_Processing/run_data_preprocessing.py"],
-    "Modelling": ["python3", "/home/captain/Desktop/BDA/Backend/Model/run_modelling.py"],
+    "Run LSTM Model": ["python3", "/home/captain/Desktop/BDA/Backend/Model/run_lstm.py"],
+    "Run VAR Model": ["python3", "/home/captain/Desktop/BDA/Backend/Model/run_var.py"],
+    "Run ARIMA Model": ["python3", "/home/captain/Desktop/BDA/Backend/Model/run_arima.py"],
     "Inference": ["python3", "/home/captain/Desktop/BDA/Backend/Model/run_inference.py"],
 }
 

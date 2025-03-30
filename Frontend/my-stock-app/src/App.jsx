@@ -1,14 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Button, HStack, VStack, Text, Box, Textarea, Image } from "@chakra-ui/react";
+import { Button, HStack, VStack, Text, Box, Textarea, Image, Grid} from "@chakra-ui/react";
 
-const actions = ["Data Collection", "Load Data", "Data Processing", "Modelling", "Inference"];
+const actions = [
+  "Data Collection",
+  "Load Data",
+  "Data Processing",
+  "Run LSTM Model",
+  "Run VAR Model",
+  "Run ARIMA Model",
+  "Inference"
+];
+
+const plotImages = [
+  { name: "LSTM", file: "LSTM_evaluation_plot.png" },
+  { name: "VAR", file: "VAR_evaluation_plot.png" },
+  { name: "ARIMA", file: "ARIMA_evaluation_plot.png" }
+];
 
 const App = () => {
   const [response, setResponse] = useState("");
   const [logs, setLogs] = useState("");
   const logsRef = useRef(null);
   const [imageUpdated, setImageUpdated] = useState(false);
-  const [showImage, setShowImage] = useState(false); // Initially hidden
+  const [showImage, setShowImage] = useState(false);
 
   useEffect(() => {
     if (logsRef.current) {
@@ -44,10 +58,10 @@ const App = () => {
 
       setResponse(`${action} completed successfully.`);
 
-      // Only show image after inference
+      // Only show images after inference
       if (action === "Inference") {
-        setImageUpdated((prev) => !prev); // Force image refresh
-        setShowImage(true); // Show the image
+        setImageUpdated((prev) => !prev);
+        setShowImage(true);
       }
     } catch (error) {
       setResponse(`Error: ${error.message}`);
@@ -57,20 +71,54 @@ const App = () => {
 
   return (
     <VStack spacing={6} p={5} align="center" bg="black" minH="100vh" color="white">
-      <HStack spacing={4}>
-        {actions.map((action) => (
-          <Button
-            key={action}
-            bg="black"
-            color="white"
-            border="2px solid #00bfff"
-            _hover={{ bg: "#00bfff", color: "black" }}
-            onClick={() => handleClick(action)}
-          >
-            {action}
-          </Button>
-        ))}
-      </HStack>
+      <VStack spacing={4} width="100%">
+        {/* Data Pipeline Buttons */}
+        <HStack spacing={4} wrap="wrap" justify="center">
+          {actions.slice(0, 3).map((action) => (
+            <Button
+              key={action}
+              bg="black"
+              color="white"
+              border="2px solid #00bfff"
+              _hover={{ bg: "#00bfff", color: "black" }}
+              onClick={() => handleClick(action)}
+            >
+              {action}
+            </Button>
+          ))}
+        </HStack>
+
+        <Box borderBottom="2px solid #00bfff" width="100%" my={4} />
+
+        {/* Model Buttons */}
+        <HStack spacing={4} wrap="wrap" justify="center">
+          {actions.slice(3, 6).map((action) => (
+            <Button
+              key={action}
+              bg="black"
+              color="white"
+              border="2px solid #00bfff"
+              _hover={{ bg: "#00bfff", color: "black" }}
+              onClick={() => handleClick(action)}
+            >
+              {action}
+            </Button>
+          ))}
+        </HStack>
+
+        <Box borderBottom="2px solid #00bfff" width="100%" my={4} />
+
+        {/* Inference Button */}
+        <Button
+          bg="black"
+          color="white"
+          border="2px solid #00bfff"
+          _hover={{ bg: "#00bfff", color: "black" }}
+          onClick={() => handleClick(actions[6])}
+        >
+          {actions[6]}
+        </Button>
+      </VStack>
 
       {response && (
         <Text fontSize="lg" fontWeight="bold" color="#00bfff">
@@ -78,17 +126,29 @@ const App = () => {
         </Text>
       )}
 
-      {/* Show image only after inference completes */}
       {showImage && (
-        <Box maxW="600px" borderRadius="md" overflow="hidden" border="2px solid #00bfff" boxShadow="0 0 15px #00bfff">
-          <Image
-            key={imageUpdated} // Forces re-render when image updates
-            src={`http://127.0.0.1:8000/static/stock_plot.png?timestamp=${new Date().getTime()}`}
-            alt="Inference Result"
-            maxWidth="100%"
-            fallbackSrc="https://via.placeholder.com/600x400?text=No+Image"
-          />
-        </Box>
+        <Grid templateColumns="repeat(1, 1fr)" gap={6} width="100%" maxW="1200px">
+          {plotImages.map((plot) => (
+            <Box
+              key={plot.name}
+              borderRadius="md"
+              overflow="hidden"
+              border="2px solid #00bfff"
+              boxShadow="0 0 15px #00bfff"
+            >
+              <Text fontSize="lg" fontWeight="bold" color="#00bfff" p={2} textAlign="center">
+                {plot.name} Model Results
+              </Text>
+              <Image
+                key={imageUpdated}
+                src={`http://127.0.0.1:8000/static/${plot.file}?timestamp=${new Date().getTime()}`}
+                alt={`${plot.name} Model Result`}
+                maxWidth="100%"
+                fallbackSrc="https://via.placeholder.com/600x400?text=No+Image"
+              />
+            </Box>
+          ))}
+        </Grid>
       )}
 
       <Box width="100%" maxW="600px">

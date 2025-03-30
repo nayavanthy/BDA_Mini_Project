@@ -35,7 +35,10 @@ for name, ticker in indicators.items():
     df.reset_index(inplace=True)
 
     # Save to CSV
-    filename = f"/home/captain/Desktop/BDA/Backend/Data_Collection/{name}.csv"
+    if name == "S&P_500":
+        filename = f"/home/captain/Desktop/BDA/Backend/Data_Collection/SP_500.csv"
+    else:
+        filename = f"/home/captain/Desktop/BDA/Backend/Data_Collection/{name}.csv"
     df.to_csv(filename, index=False)  # Save properly formatted file
     
     print(f"Saved: {filename}")

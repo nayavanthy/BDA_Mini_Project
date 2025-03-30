@@ -1,8 +1,6 @@
 import subprocess
 import pandas as pd
 import matplotlib.pyplot as plt
-import io
-import base64
 import json
 import sys
 import os
@@ -16,68 +14,66 @@ from DashBoard import run
 
 # Run inference script using Spark
 file = "/home/captain/Desktop/BDA/Backend/Model/inference.py"
-# subprocess.run(f"sudo -u hadoop /home/hadoop/spark/bin/spark-submit --master yarn --deploy-mode client {file}", shell=True)
+subprocess.run(f"sudo -u hadoop /home/hadoop/spark/bin/spark-submit --master yarn --deploy-mode client {file}", shell=True)
 
 # Run the dashboard script
 run.run()
 
-# Function to find the correct part-0000*.csv file in a given directory
-def find_part_file(directory):
-    files = glob.glob(os.path.join(directory, "part-0000*.csv"))
-    return files[0] if files else None  # Return the first (and only) matching file
+def find_and_merge_part_files(directory):
+    """Finds and merges all part-*.csv files into a single DataFrame."""
+    files = sorted(glob.glob(os.path.join(directory, "part-*.csv")))  # Get all matching files
+    if not files:
+        return None  # Return None if no files found
+
+    df_list = [pd.read_csv(file) for file in files]  # Read each file
+    merged_df = pd.concat(df_list, ignore_index=True)  # Merge into one DataFrame
+    
+    return merged_df  # Return the merged DataFrame
 
 # Define base directory
-base_dir = "/home/captain/Desktop/BDA/Backend/DashBoard"
+base_dir = "/home/captain/Desktop/BDA/Backend/DashBoard/evaluation_metrics.csv"
 
-# Load datasets dynamically
-test_file = find_part_file(os.path.join(base_dir, "test_stock_data.csv"))
-test = pd.read_csv(test_file) if test_file else None
+# Load and merge evaluation metrics
+metrics_df = find_and_merge_part_files(base_dir)
 
-stock_dirs = {
-    "AAPL": "AAPL_Close_predictions.csv",
-    "AMZN": "AMZN_Close_predictions.csv",
-    "GOOGL": "GOOGL_Close_predictions.csv",
-    "JPM": "JPM_Close_predictions.csv",
-    "MSFT": "MSFT_Close_predictions.csv",
-    "NVDA": "NVDA_Close_predictions.csv",
-    "TSLA": "TSLA_Close_predictions.csv",
-    "V": "V_Close_predictions.csv",
-    "XOM": "XOM_Close_predictions.csv",
-}
+if metrics_df is None:
+    print(json.dumps({"error": "No evaluation metrics found."}), flush=True)
+    sys.exit()
 
-stocks = {}
+# Directory to save plots
+plot_dir = "/home/captain/Desktop/BDA/Backend/DashBoard/method_plots/"
+os.makedirs(plot_dir, exist_ok=True)
 
-for symbol, dir_name in stock_dirs.items():
-    stock_file = find_part_file(os.path.join(base_dir, dir_name))
-    if stock_file:
-        stocks[symbol] = pd.read_csv(stock_file)
+# Metrics to plot
+metrics = ["MSE", "RMSE", "MAE", "R2"]
+colors = ["blue", "green", "red", "purple"]
+plot_paths = {}
 
-# Create a multi-plot figure
-fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(15, 12))
-fig.suptitle("Stock Prices: Actual vs. Predicted", fontsize=16)
+# Generate individual plots for each method
+for method in metrics_df["Method"].unique():
+    fig, ax = plt.subplots(figsize=(12, 6))
 
-# Flatten the axes array for easy iteration
-axes = axes.flatten()
+    subset = metrics_df[metrics_df["Method"] == method]
 
-# Plot each stock
-for i, (symbol, df) in enumerate(stocks.items()):
-    ax = axes[i]
-    ax.plot(test['Date'], test[f"{symbol}_Close"], label=f"Actual {symbol}", color="blue")
-    ax.plot(df['Date'], df['prediction'], label=f"Predicted {symbol}", linestyle="dashed", color="red")
-    ax.set_title(symbol)
+    # Plot each metric
+    for metric, color in zip(metrics, colors):
+        ax.plot(subset["Stock"], subset[metric], label=metric, marker="o", linestyle="-", color=color)
+
+    # Formatting
+    ax.set_title(f"Performance of {method}")
+    ax.set_xlabel("Stock")
+    ax.set_ylabel("Metric Value")
     ax.legend()
-    ax.tick_params(axis="x", rotation=45)
     ax.grid(True)
+    plt.xticks(rotation=45)
 
-# Adjust layout
-plt.tight_layout(rect=[0, 0, 1, 0.96])
+    # Save plot
+    plot_path = os.path.join(plot_dir, f"{method}_evaluation_plot.png")
+    plt.savefig(plot_path, format="png", bbox_inches="tight")
+    plt.close()
 
-# Define a path for the saved plot
-plot_path = "/home/captain/Desktop/BDA/Backend/DashBoard/stock_plot.png"
+    plot_paths[method] = plot_path
 
-# Save the plot
-plt.savefig(plot_path, format="png", bbox_inches="tight")
-
-# Return JSON with file path instead of Base64
-output = {"plot_path": plot_path}
-print(json.dumps(output), flush=True)  # Ensure it's printed cleanly
+# Return JSON with all plot paths
+output = {"plot_paths": plot_paths}
+print(json.dumps(output), flush=True)

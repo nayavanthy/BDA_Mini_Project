@@ -4,19 +4,7 @@ import subprocess
 LOCAL_DIR = "/home/captain/Desktop/BDA/Backend/DashBoard/"
 
 # List of HDFS file paths to download
-HDFS_FILES = [
-    "/user/bda_mini_project/forecast/AAPL_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/AMZN_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/GOOGL_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/JPM_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/MSFT_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/NVDA_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/TSLA_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/V_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/XOM_Close_predictions.csv",
-    "/user/bda_mini_project/forecast/evaluation_metrics.csv",
-    "/user/bda_mini_project/inferred_data/test_stock_data.csv"
-]
+HDFS_FILES = ["/user/bda_mini_project/evaluation_metrics.csv"]
 
 # Command template for downloading files from HDFS
 HDFS_GET_CMD = "~/hadoop/bin/hdfs dfs -get -f {hdfs_file} {local_dir}"
